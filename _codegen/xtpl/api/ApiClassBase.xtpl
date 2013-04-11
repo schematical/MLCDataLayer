@@ -5,8 +5,12 @@ class MLCApi<%= $className; %>Base extends MLCApiClassBase{
 	public function  __call($strName, $arrArguments) {
        
 		$arrReturn = array();
-        $obj<%= $className; %> = <%= $className; %>::LoadById($strName);
-	
+		if(is_numeric($strName){
+            $obj<%= $className; %> = <%= $className; %>::LoadById($strName);
+        }else{
+            $obj<%= $className; %> = null;
+        }
+
       
         if(!is_null($obj<%= $className; %>)){
         	return new MLCApi<%= $className; %>Object($obj<%= $className; %>);
