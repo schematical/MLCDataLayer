@@ -40,7 +40,7 @@ class MLCDBDriver{
     
 	public static function Query($strSql, $mixDBConnection = null){
 		//die($strSql);
-        _dv($mixDBConnection);
+
 		if(!is_null($mixDBConnection)){
 			if(is_string($mixDBConnection)){
 				//die(print_r(self::$arrInitilizedDatabases));
