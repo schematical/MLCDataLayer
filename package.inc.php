@@ -11,3 +11,4 @@ MLCApplicationBase::$arrClassFiles['MLCDBDriver'] = __MLC_DATALAYER_CORE__ . '/M
 MLCApplicationBase::$arrClassFiles['MLCDateTime'] = __MLC_DATALAYER_CORE__ . '/MLCDateTime.class.php';      
 MLCApplicationBase::$arrClassFiles['MySqlDataConnection'] = __MLC_DATALAYER_CORE__ . '/MySqlDataConnection.class.php';
 MLCDBDriver::Init();
+require_once(__MLC_DATALAYER_CORE__ . '/ctl/_events.inc.php');

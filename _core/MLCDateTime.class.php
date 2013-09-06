@@ -1,12 +1,22 @@
 <?php
 abstract class MLCDateTime{
-
+    const MYSQL_FORMAT = "Y-m-d H:i:s";
+    protected static $arrDateStr = array(
+            'H'=>'hour',
+            'h'=>'hour',
+            'i'=>'minute',
+            's'=>'second',
+            'y'=>'year',
+            'Y'=>'year',
+            'm'=>'month',
+            'd'=>'day'
+    );
 	public static function Now($strOffset = null){
 		
-		$strDate = date("Y-m-d H:i:s");
+		$strDate = date(self::MYSQL_FORMAT);
 		if(!is_null($strOffset)){
 			$intTime = strtotime($strOffset . ' ' . $strOffset);
-			$strDate = date("Y-m-d H:i:s", $intTime);
+			$strDate = date(self::MYSQL_FORMAT, $intTime);
 		}
 		return $strDate;
 	}
@@ -21,6 +31,47 @@ abstract class MLCDateTime{
 		}
 	
 	}
+    public static function ParseFromFormat($strFormat, $strDate, $arrDateStr = null) {
+        if(is_null($arrDateStr)){
+            $arrDateStr = self::$arrDateStr;
+        }
+        //_dv($strFormat . ' - ' . $strDate);
+        $arrFormat = preg_split('//', $strFormat, -1, PREG_SPLIT_NO_EMPTY);
+        $arrDate = preg_split('//', $strDate, -1, PREG_SPLIT_NO_EMPTY);
+
+        $dt = array();
+        foreach ($arrDate as $k => $v) {
+            if (
+                (array_key_exists($k, $arrFormat)) &&
+                (array_key_exists($arrFormat[$k], $arrDateStr))
+            ){
+                if(!array_key_exists(self::$arrDateStr[$arrFormat[$k]], $dt)){
+                    $dt[self::$arrDateStr[$arrFormat[$k]]] = '';
+                }
+                $dt[self::$arrDateStr[$arrFormat[$k]]] .= $v;
+            }
+        }
+        return $dt;
+    }
+    public static function ConvertFromFormatToFormat($strFromFormat, $strToFormat, $strDate, $arrDateStr = null){
+        if(is_null($arrDateStr)){
+            $arrDateStr = self::$arrDateStr;
+        }
+        $arrDateData = self::ParseFromFormat($strFromFormat, $strDate, $arrDateStr);
+
+        $arrToFormat = preg_split('//', $strToFormat, -1, PREG_SPLIT_NO_EMPTY);
+        $strDateReturn = '';
+        foreach ($arrToFormat as $k => $v) {
+            if(array_key_exists($v, $arrDateStr)){
+                if (array_key_exists($arrDateStr[$v], $arrDateData)){
+                    $strDateReturn .= $arrDateData[$arrDateStr[$v]];
+                }
+            }else{
+                $strDateReturn .= $v;
+            }
+        }
+        return $strDateReturn;
+    }
 	public static function IsGreaterThan($mixDate1, $mixDate2 = null){
 		if(is_string($mixDate1)){
 			$intDate1 = strtotime($mixDate1);

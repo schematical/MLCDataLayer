@@ -2,7 +2,7 @@
 /*
  * Manages collections of data objects
  */
-class BaseEntityCollection
+class BaseEntityCollection implements arrayaccess
 	{
 		
 		protected $collection = array();
@@ -103,8 +103,8 @@ class BaseEntityCollection
 				$this->remove($nObj);
 			}
 		}
-		public function __construct(){
-			
+		public function __construct($arrData = array()){
+			$this->collection = $arrData;
 		}
 		public function save(){
 			foreach($this->collection as $entity){
@@ -124,6 +124,26 @@ class BaseEntityCollection
 		public function removeByIndex($intIndex){
 			unset($this->collection[$intIndex]);
 		}
+        public function offsetSet($strKey, $mixValue) {
+            if (is_null($strKey)) {
+                $this->collection[] = $mixValue;
+            } else {
+                $this->collection[$strKey] = $mixValue;
+            }
+        }
+        public function offsetExists($strKey) {
+            return array_key_exists($strKey, $this->collection);
+        }
+        public function offsetUnset($strOffset) {
+            unset($this->collection[$strOffset]);
+        }
+        public function offsetGet($strOffset) {
+            if(array_key_exists($strOffset, $this->collection)){
+                 return $this->collection[$strOffset];
+            }else{
+                return null;
+            }
+        }
 			
 	
 	}
