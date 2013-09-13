@@ -1,4 +1,6 @@
 <?php
+//TZ Related info
+//http://www.thisprogrammingthing.com/2013/things-i-learned-while-writing-a-timezone-aware-website/
 abstract class MLCDateTime{
     const MYSQL_FORMAT = "Y-m-d H:i:s";
     protected static $arrDateStr = array(
@@ -11,11 +13,18 @@ abstract class MLCDateTime{
             'm'=>'month',
             'd'=>'day'
     );
+    public static function Offset($strDate, $strOffset = null){
+        if(!is_null($strOffset)){
+            $intTime = strtotime($strOffset . ' ' . $strDate);
+            $strDate = date(self::MYSQL_FORMAT, $intTime);
+        }
+        return $strDate;
+    }
 	public static function Now($strOffset = null){
 		
 		$strDate = date(self::MYSQL_FORMAT);
 		if(!is_null($strOffset)){
-			$intTime = strtotime($strOffset . ' ' . $strOffset);
+			$intTime = strtotime($strOffset . ' ' . $strDate);
 			$strDate = date(self::MYSQL_FORMAT, $intTime);
 		}
 		return $strDate;
@@ -103,4 +112,27 @@ abstract class MLCDateTime{
 		}
 		return date("Y-m-d H:i:s", $intTime);
 	}
+    public static function GetDST($tzId, $time = null) {
+        if($time == null){
+            $time = gmdate('U');
+        }
+
+        $tz = new DateTimeZone($tzId);
+
+        $transition = $tz->getTransitions($time);
+
+        return $transition[0]['isdst'];
+    }
+
+    public static function GetOffset($tzId, $time = null) {
+        if($time == null){
+            $time = gmdate('U');
+        }
+
+        $tz = new DateTimeZone($tzId);
+
+        $transition = $tz->getTransitions($time);
+
+        return $transition[0]['offset'];
+    }
 }

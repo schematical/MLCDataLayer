@@ -1,5 +1,8 @@
 <?php
-define('__MLC_DATALAYER__', dirname(__FILE__));
+if(!defined('__MLC_DATALAYER_V__')){
+    define('__MLC_DATALAYER_V__', '2.0');
+}
+define('__MLC_DATALAYER__', dirname(__FILE__) . '/' . __MLC_DATALAYER_V__);
 define('__MLC_DATALAYER_CORE__', __MLC_DATALAYER__ . '/_core');
 define('__MLC_DATALAYER_CG__', __MLC_DATALAYER__ . '/_codegen');
 define('DB_PREFIX','');
