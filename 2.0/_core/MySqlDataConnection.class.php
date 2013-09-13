@@ -2,7 +2,7 @@
 /* 
  * This class deals with connecting and querying a mysql database
  */
-class MySqlDataConnection extends DataConnectionBase{
+class MySqlDataConnection extends MLCDataConnectionBase{
 
     public function Connect(){
     		

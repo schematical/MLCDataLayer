@@ -1,8 +1,9 @@
 <?php
 //TZ Related info
 //http://www.thisprogrammingthing.com/2013/things-i-learned-while-writing-a-timezone-aware-website/
-abstract class MLCDateTime{
-    const MYSQL_FORMAT = "Y-m-d H:i:s";
+class MLCDateTime{
+    const MYSQL_FORMAT = "Y-m-d H:i:s GMT";
+    protected static $strTimeZone = "America/Los_Angeles";
     protected static $arrDateStr = array(
             'H'=>'hour',
             'h'=>'hour',
@@ -134,5 +135,28 @@ abstract class MLCDateTime{
         $transition = $tz->getTransitions($time);
 
         return $transition[0]['offset'];
+    }
+    protected $objDateTime = null;
+    public function __construct($mixDate){
+        if(
+            is_object($mixDate) &&
+            $mixDate instanceof DateTime
+        ){
+            $intTime = $mixDate;
+        }elseif(is_string($mixDate)){
+            $intTime = strtotime($mixDate);
+        }elseif(is_int($mixDate)){
+            $intTime = $mixDate;
+        }
+        $this->objDateTime = new DateTime($intTime, new DateTimeZone("UTC"));
+
+        $this->objDateTime->setTimeZone(self::$strTimeZone);
+    }
+    public function __toString(){//$strFormat = null){
+        $strFormat = null;
+        if(is_null($strFormat)){
+            $strFormat = self::MYSQL_FORMAT;
+        }
+        return $this->objDateTime->format($strFormat);
     }
 }

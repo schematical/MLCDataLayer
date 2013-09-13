@@ -2,7 +2,7 @@
 /* 
  * 
  */
-abstract class DataConnectionBase{
+abstract class MLCDataConnectionBase{
 
     protected $intConnectionNumber;
     protected $strHostName;

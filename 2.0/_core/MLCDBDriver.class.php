@@ -50,7 +50,7 @@ class MLCDBDriver{
 			}
 			if(
 				(is_object($objDBConnection)) &&
-				($objDBConnection instanceof DataConnectionBase)
+				($objDBConnection instanceof MLCDataConnectionBase)
 			){
 				$objDBConnection->Connect();
 			}else{

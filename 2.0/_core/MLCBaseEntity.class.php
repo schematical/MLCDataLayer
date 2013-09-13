@@ -2,7 +2,7 @@
 /*
  * Works as the base class for our data_layer
  */
-abstract class BaseEntity {
+abstract class MLCBaseEntity {
 	protected static $blnUseCache = false;
 	protected static $arrCachedData = array();
 	
