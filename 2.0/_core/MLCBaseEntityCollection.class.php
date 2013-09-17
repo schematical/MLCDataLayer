@@ -17,6 +17,39 @@ class MLCBaseEntityCollection implements arrayaccess, Iterator{
     protected $arrFieldConditions = array();
 
     protected $arrJoin = array();
+
+    public function MSerialize(){
+        $arrReturn = array();
+        $arrReturn['conditions'] = array();
+        foreach($this->arrFieldConditions as $objFieldCond){
+            $arrReturn[] =  $objFieldCond->MSerialize();
+        }
+        $arrReturn['limit'] = array(
+            'ct' => $this->intLimitCount,
+            'offset' => $this->intLimitOffset
+        );
+
+        $mixData['order_by'] = array(
+            'field' => $this->strOrderByField,
+            'direction' => $this->strOrderByDriection
+        );
+        return $arrReturn;
+    }
+    public function MUnserialize($mixData){
+        if(is_string($mixData)){
+            $mixData = json_decode($mixData);
+        }
+        foreach($mixData['conditions'] as $arrCond){
+            $objFieldCondition = new MLCFieldCondition();
+            $objFieldCondition->MUnserialize($arrCond);
+            $this->arrFieldConditions[$objFieldCondition->Field][$objFieldCondition->Comparison][$objFieldCondition->Operator] = $objFieldCondition;
+        }
+        $this->intLimitCount = $mixData['limit']['ct'];
+        $this->intLimitCount = $mixData['limit']['offset'];
+
+        $this->strOrderByField = $mixData['order_by']['field'];
+        $this->strOrderByDriection = $mixData['order_by']['direction'];
+    }
     public function AddQueryToHistory($strSql){
         $this->arrQueryHistory[] = $strSql;
     }
@@ -32,18 +65,31 @@ class MLCBaseEntityCollection implements arrayaccess, Iterator{
         if(!array_key_exists($strField, $this->arrFieldConditions)){
             $this->arrFieldConditions[$strField] = array();
         }
-        $this->arrFieldConditions[$strField][] = new MLCFieldCondition(
+        if(!array_key_exists($strOperator, $this->arrFieldConditions[$strField])){
+            $this->arrFieldConditions[$strField][$strOperator] = array();
+        }
+        $this->arrFieldConditions[$strField][$strOperator][$strComparison] = new MLCFieldCondition(
             $strField,
             $strComparison,
             $strOperator
         );
+        return $this->arrFieldConditions[$strField][$strOperator][$strComparison];
     }
     public function OrderBy($strField, $strDirection = 'DESC'){
+        if(strpos($strField, '.') === false){
+            $strField = constant($this->strEntity . '::TABLE_NAME') . '.' . $strField;
+        }
         $this->strOrderByField = $strField;
         $this->strOrderByDriection = $strDirection;
     }
-    public function RemoveFieldConditions($strField){
-        unset($this->arrFieldConditions[$strField]);
+    public function RemoveFieldConditions($strField, $strCondition = null, $strComparison = null){
+        if(is_null($strCondition)){
+            unset($this->arrFieldConditions[$strField]);
+        }elseif(is_null($strComparison)){
+            unset($this->arrFieldConditions[$strField][$strCondition]);
+        }else{
+            unset($this->arrFieldConditions[$strField][$strCondition][$strComparison]);
+        }
     }
     public function RemoveAllFieldConditions(){
         $this->arrFieldConditions = array();
@@ -60,16 +106,29 @@ class MLCBaseEntityCollection implements arrayaccess, Iterator{
         $this->intLimitOffset -= $this->intLimitCount;
         $this->ExecuteQuery();
     }
-    protected function GenerateSQL(){
+
+    protected function GenerateSQL($blnSkipLimit = false){
         $strSql = '';
-        if(count($this->arrFieldConditions) > 0){
-            $strSql .= 'WHERE ';
-            $arrAndConditions = array();
-            foreach($this->arrFieldConditions as $arrSingleFieldConditions){
-                foreach($arrSingleFieldConditions as $objFieldCondition){
-                    $arrAndConditions[] = $objFieldCondition->RenderSql();
+
+
+        $arrAndConditions = array();
+        foreach($this->arrFieldConditions as $strField => $arrFieldCond){
+
+
+            foreach($arrFieldCond as $strCondition =>  $arrComparisons){
+                $arrOrConditions = array();
+                foreach($arrComparisons as $objFieldCondition){
+
+                    $arrOrConditions[] = $objFieldCondition->RenderSql();
+                }
+                if(count($arrOrConditions) > 0){
+                    $arrAndConditions[] = implode(' OR ',$arrOrConditions);
                 }
             }
+
+        }
+        if(count($arrAndConditions) > 0){
+            $strSql .= 'WHERE ';
             $strSql .= implode(' AND ' , $arrAndConditions);
         }
         if(!is_null($this->strOrderByField)){
@@ -77,10 +136,12 @@ class MLCBaseEntityCollection implements arrayaccess, Iterator{
                 $this->strOrderByField . ' ' .
                 $this->strOrderByDriection;
         }
-        if(!is_null($this->intLimitCount)){
-            $strSql .= ' LIMIT ' .
-                $this->intLimitOffset . ',' .
-                $this->intLimitCount;
+        if(!$blnSkipLimit){
+            if(!is_null($this->intLimitCount)){
+                $strSql .= ' LIMIT ' .
+                    $this->intLimitOffset . ',' .
+                    $this->intLimitCount;
+            }
         }
         return $strSql;
     }
@@ -91,7 +152,7 @@ class MLCBaseEntityCollection implements arrayaccess, Iterator{
             (!class_exists($this->strEntity))
         ){
             //_dv($this->strEntity);
-            throw new Exception("Cannot ExicuteQuery on this collection due to invalid Entity Set to query from");
+            throw new Exception("Cannot Exicute Query on this collection due to invalid Entity Set to query from");
         }
             $strSql = $this->GenerateSQL();
             call_user_func(
@@ -102,6 +163,29 @@ class MLCBaseEntityCollection implements arrayaccess, Iterator{
             );
 
 
+    }
+    public function QueryFullCount(){
+        //Does nothing with out a table set
+        if(
+            (is_null($this->strEntity)) ||
+            (!class_exists($this->strEntity))
+        ){
+            //_dv($this->strEntity);
+            throw new Exception("Cannot Exicute Query on this collection due to invalid Entity Set to query from");
+        }
+        $strSql = $this->GenerateSQL(true);
+        $intCount = call_user_func(
+            $this->strEntity . '::QueryCount',
+            $strSql
+        );
+
+        return $intCount;
+    }
+    public function QueryPaginationLength(){
+        $intResultCount = $this->QueryFullCount();
+        //_dv($intResultCount);
+        $intPageCount = ceil($intResultCount/$this->intLimitCount);
+        return $intPageCount;
     }
 
 
@@ -287,8 +371,33 @@ class MLCBaseEntityCollection implements arrayaccess, Iterator{
             $var = ($key !== NULL && $key !== FALSE);
             return $var;
         }
+
+    /////////////////////////
+    // Public Properties: GET
+    /////////////////////////
+    public function __get($strName)
+    {
+        switch ($strName) {
+            case "History":
+                return $this->arrQueryHistory;
+            case "FieldConditions":
+                return $this->arrFieldConditions;
+            case "LimitCount":
+                return $this->intLimitCount;
+            case "LimitOffset":
+                return $this->intLimitOffset;
+            case "OrderByField":
+                return $this->strOrderByField;
+            case "OrderByDirection":
+                return $this->strOrderByDirection;
+            default:
+                //return parent::__get($strName);
+                throw new Exception("Not porperty exists with name '" . $strName . "' in class " . __CLASS__);
+        }
+    }
+
 			
 	
-	}
+}
 	
 ?>

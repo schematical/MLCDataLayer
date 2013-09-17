@@ -2,7 +2,7 @@
 //TZ Related info
 //http://www.thisprogrammingthing.com/2013/things-i-learned-while-writing-a-timezone-aware-website/
 class MLCDateTime{
-    const MYSQL_FORMAT = "Y-m-d H:i:s GMT";
+    const MYSQL_FORMAT = "Y-m-d H:i:s";
     protected static $strTimeZone = "America/Los_Angeles";
     protected static $arrDateStr = array(
             'H'=>'hour',
